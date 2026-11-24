@@ -214,12 +214,6 @@ int APS5_VABI sceLibcInternalPending4_109_nid_no_patch() {
 }
 APS5_EXPORT("9HILqEoh24E", sceLibcInternalPending4_109_nid_no_patch);
 
-int APS5_VABI sceLibcInternalPending4_119_nid_no_patch() {
-    NotImplemented_nid_no_patch(__func__);
-    return 0;
-}
-APS5_EXPORT("XD9FmX1mavU", sceLibcInternalPending4_119_nid_no_patch);
-
 [[noreturn]] void APS5_VABI sceLibcInternalPending4_123_nid_no_patch(const char* message, const GuestLocale::String* path1,
     const GuestLocale::String* path2, LibcException::ErrorCode code) {
     FilesystemErrorTwoPaths_nid_no_patch(message, path1, path2, code);

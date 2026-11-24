@@ -136,6 +136,7 @@ int APS5_VABI _ZNSt10filesystem7_RenameEPKcS1__nid_postfix(const char* from, con
 int APS5_VABI _ZNSt10filesystem7_ResizeEPKcm_nid_postfix(const char* path, std::uint64_t size);
 int APS5_VABI _ZNSt10filesystem10_Copy_fileEPKcS1__nid_postfix(const char* from, const char* to);
 int APS5_VABI _ZNSt10filesystem8_StatvfsEPKcRNS_10space_infoE_nid_postfix(const char* path, std::uint64_t* space);
+int APS5_VABI _ZNSt10filesystem11_EquivalentEPKcS1__nid_postfix(const char* first, const char* second);
 bool APS5_VABI _ZNSt10filesystem12_Current_setEPKc_nid_postfix(const char* path);
 int APS5_VABI _ZNSt10filesystem13_Current_set2EPKc_nid_postfix(const char* path);
 int APS5_VABI _ZNSt10filesystem9_Make_dirEPKcS1__nid_postfix(const char* path, const char* existing);
