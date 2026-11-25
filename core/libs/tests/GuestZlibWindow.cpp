@@ -1,4 +1,5 @@
 #include "prx/libSceZlib/include/Api.hpp"
+#include "prx/libc/include/GuestArena.hpp"
 
 #include <algorithm>
 #include <array>
@@ -125,6 +126,42 @@ static std::vector<unsigned char> Compressed(std::uint32_t distance, std::vector
     for (int shift : {24, 16, 8, 0}) result.push_back(static_cast<unsigned char>(adler >> shift));
     return result;
 }
+
+namespace {
+
+struct InputReadInterrupted {};
+
+std::uintptr_t inputBegin = 0;
+std::uintptr_t inputEnd = 0;
+int inputReads = 0;
+
+void InterruptSecondInputRead(std::uintptr_t address, std::size_t) {
+    if (address >= inputBegin && address < inputEnd && ++inputReads == 2) throw InputReadInterrupted{};
+}
+
+void InterruptedInflate() {
+    std::vector<unsigned char> expected;
+    const auto compressed = Compressed(32768, expected);
+    alignas(2048) std::array<unsigned char, 65536> destination{};
+    std::uint64_t request = 0;
+    inputBegin = reinterpret_cast<std::uintptr_t>(compressed.data());
+    inputEnd = inputBegin + compressed.size();
+    GuestArena::GuestArenaSetHostReadHook_nid_no_patch(InterruptSecondInputRead);
+    bool interrupted = false;
+    try {
+        sceZlibInflate(compressed.data(), compressed.size(), destination.data(), destination.size(), &request);
+    } catch (const InputReadInterrupted&) {
+        interrupted = true;
+    }
+    GuestArena::GuestArenaSetHostReadHook_nid_no_patch(nullptr);
+    Require(interrupted && inputReads == 2 && request == 0);
+    Require(std::all_of(destination.begin(), destination.end(), [](auto byte) { return byte == 0; }));
+    std::uint32_t poll = 0;
+    Require(sceZlibWaitForDone(&request, &poll) == static_cast<std::int32_t>(0x81120027));
+}
+
+} // namespace
+
 static void WaitPointers() {
     constexpr auto invalid = static_cast<std::int32_t>(0x81120016);
     constexpr auto timedOut = static_cast<std::int32_t>(0x81120027);
@@ -196,6 +233,7 @@ static void WaitPointers() {
 int main() {
     WaitPointers();
     Require(sceZlibInitialize(nullptr, 0) == 0);
+    InterruptedInflate();
     std::size_t cases = 0;
     for (unsigned distance : {1,2,3,4,1024,16384,32767,32768}) {
         std::vector<unsigned char> expected;

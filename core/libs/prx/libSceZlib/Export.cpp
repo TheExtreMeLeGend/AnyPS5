@@ -11,6 +11,7 @@
 #include <cstdint>
 #include <deque>
 #include <limits>
+#include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <unordered_map>
@@ -80,6 +81,7 @@ std::int32_t APS5_VABI sceZlibInflate(const void* source, std::uint32_t sourceLe
     stream.next_out = outputBuffer.data();
     stream.avail_out = destinationLength;
     if (inflateInit(&stream) != Z_OK) throw std::runtime_error("sceZlibInflate: decoder initialization failed");
+    std::unique_ptr<z_stream, decltype(&inflateEnd)> cleanup(&stream, inflateEnd);
     std::uint32_t supplied = 0;
     bool invalidInput = false;
     int decoded = Z_BUF_ERROR;
@@ -139,7 +141,7 @@ std::int32_t APS5_VABI sceZlibInflate(const void* source, std::uint32_t sourceLe
     } else {
         status = FATAL;
     }
-    const int ended = inflateEnd(&stream);
+    const int ended = inflateEnd(cleanup.release());
     if (ended != Z_OK) throw std::runtime_error("sceZlibInflate: decoder cleanup failed");
     if (invalidInput) return INVALID_ARGUMENT;
     const auto idAddress = reinterpret_cast<std::uintptr_t>(requestId);
